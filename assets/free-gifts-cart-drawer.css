@@ -1,0 +1,25 @@
+.drawer {
+    visibility: hidden;
+}
+
+/* Lock and style free gift rows */
+.cart-item--gift .quantity-popover-container,
+.cart-item--gift cart-remove-button {
+    display: none !important;
+}
+
+.cart-item--gift-qty {
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.badge--gift {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.2rem 0.6rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 4px;
+    background: #e0f2fe;
+    color: #0369a1;
+}

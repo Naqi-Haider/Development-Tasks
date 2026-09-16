@@ -8,6 +8,9 @@
 {{ 'quantity-popover.css' | asset_url | stylesheet_tag }}
 {{ 'component-card.css' | asset_url | stylesheet_tag }}
 
+{% comment %} Adding the free gifts drawer css (Custom effect) {% endcomment %}
+{{ 'free-gifts-cart-drawer.css' | asset_url | stylesheet_tag }}
+
 <script src="{{ 'cart.js' | asset_url }}" defer="defer"></script>
 <script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
 
@@ -17,7 +20,18 @@
   }
 </style>
 
-<cart-drawer class="drawer{% if cart == empty %} is-empty{% endif %}">
+{% comment %} Get the available variant of the free gift products {% endcomment %}
+{%- assign gift_1_variant = gift_1_product.selected_or_first_available_variant -%}
+{%- assign gift_2_variant = gift_2_product.selected_or_first_available_variant -%}
+
+{% comment %} Pass these values inside the web-component {% endcomment %}
+<cart-drawer
+  class="drawer{% if cart == empty %} is-empty{% endif %}"
+  data-threshold-1="{{ gift_1_threshold | times: 100 }}"
+  data-variant-1="{{ gift_1_variant.id }}"
+  data-threshold-2="{{ gift_2_threshold | times: 100 }}"
+  data-variant-2="{{ gift_2_variant.id }}"
+>
   <div id="CartDrawer" class="cart-drawer">
     <div id="CartDrawer-Overlay" class="cart-drawer__overlay"></div>
     <div
@@ -120,9 +134,14 @@
 
                   <tbody role="rowgroup">
                     {%- for item in cart.items -%}
+                      {% comment %} Check if the item is a free gift or not {% endcomment %}
+                      {% assign is_gift = false %}
+                      {%- if item.variant_id == gift_1_variant.id or item.variant_id == gift_2_variant.id -%}
+                        {% assign is_gift = true %}
+                      {% endif %}
                       <tr
                         id="CartDrawer-Item-{{ item.index | plus: 1 }}"
-                        class="cart-item{% if item.parent_relationship.parent != null %} cart-item__nested-line{% endif %}"
+                        class="cart-item{% if item.parent_relationship.parent != null %} cart-item__nested-line{% endif %} {% if is_gift %}cart-item--gift {% endif %}"
                         role="row"
                         {% if item.parent_relationship.parent != null %}
                           aria-label="{{- 'products.product.nested_label' | t: title: item.product.title, parent_title: item.parent_relationship.parent.title | escape -}}"
@@ -156,12 +175,21 @@
                             <a href="{{ item.url }}" class="cart-item__name h4 break">
                               {{- item.product.title | escape -}}
                             </a>
-                            {%- assign cart_disclosure_modal_id = 'CartDisclosureModal-drawer-' | append: item.key | replace: ':', '-' -%}
+                            {%- assign cart_disclosure_modal_id = 'CartDisclosureModal-drawer-'
+                              | append: item.key
+                              | replace: ':', '-'
+                            -%}
                             {%- render 'cart-disclosure-indicator',
                               product: item.product,
                               modal_id: cart_disclosure_modal_id
                             -%}
                           </div>
+
+                          {% if is_gift %}
+                            <div>
+                              <span class="badge--gift">Free Gift</span>
+                            </div>
+                          {% endif %}
 
                           {%- if item.original_price != item.final_price -%}
                             <div class="cart-item__discounted-prices">
@@ -292,6 +320,9 @@
                         >
                           <quantity-popover>
                             <div class="cart-item__quantity-wrapper quantity-popover-wrapper">
+                              {% if is_gift %}
+                                <span class="cart-item--gift-qty">Qty: {{ item.quantity }}</span>
+                              {% endif %}
                               <div class="quantity-popover-container{% if has_qty_rules or has_vol_pricing %} quantity-popover-container--hover{% endif %}">
                                 <quantity-input class="quantity cart-quantity">
                                   <button
