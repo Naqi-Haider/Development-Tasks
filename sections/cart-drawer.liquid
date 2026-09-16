@@ -1,1 +1,39 @@
-{%- render 'cart-drawer' -%}
+{%- render 'cart-drawer',
+    
+    gift_1_threshold: section.settings.gift_1_threshold,
+    gift_1_product: section.settings.gift_1_product,
+    gift_2_threshold: section.settings.gift_2_threshold,
+    gift_2_product: section.settings.gift_2_product
+
+    -%}
+
+{% schema %}
+{
+    "name": "Cart Drawer",
+    "settings": [
+        {
+            "type": "number",
+            "id": "gift_1_threshold",
+            "label": "Threshold",
+            "default": 60
+        },
+        {
+            "type": "product",
+            "id": "gift_1_product",
+            "label": "Gift 1 Product"
+        },
+        {
+            "type": "number",
+            "id": "gift_2_threshold",
+            "label": "Threshold",
+            "default": 100
+        },
+        {
+            "type": "product",
+            "id": "gift_2_product",
+            "label": "Gift 2 Product"
+        },
+
+    ]
+}
+{% endschema %}
