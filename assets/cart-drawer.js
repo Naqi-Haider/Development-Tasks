@@ -5,6 +5,15 @@ class CartDrawer extends HTMLElement {
     this.addEventListener('keyup', (evt) => evt.code === 'Escape' && this.close());
     this.querySelector('#CartDrawer-Overlay').addEventListener('click', this.close.bind(this));
     this.setHeaderCartIconAccessibility();
+
+    //Listen to in-drawer quantity and cart modifications:
+    if(typeof subscribe != 'undefined' && typeof PUB_SUB_EVENTS != undefined){
+      subscribe(PUB_SUB_EVENTS.cartUpdate, () => {
+        if(!this.isSyncing){
+          this.syncGifts();
+        }
+      })
+    }
   }
 
   setHeaderCartIconAccessibility() {
@@ -129,95 +138,90 @@ class CartDrawer extends HTMLElement {
 
   //Sync Gifts code inside this web component class:
   syncGifts() {
-    if (this.isSyncing) return;
+  if (this.isSyncing) return;
 
-    // Use getAttribute to reliably read hyphenated number attributes
-    const t1 = parseInt(this.getAttribute('data-threshold-1'), 10);
-    const v1 = parseInt(this.getAttribute('data-variant-1'), 10);
-    const t2 = parseInt(this.getAttribute('data-threshold-2'), 10);
-    const v2 = parseInt(this.getAttribute('data-variant-2'), 10);
+  const t1 = parseInt(this.getAttribute('data-threshold-1'), 10);
+  const v1 = parseInt(this.getAttribute('data-variant-1'), 10);
+  const t2 = parseInt(this.getAttribute('data-threshold-2'), 10);
+  const v2 = parseInt(this.getAttribute('data-variant-2'), 10);
 
-    if (!v1 && !v2) return;
+  if (!v1 && !v2) return;
 
-    fetch(`${routes.cart_url}.js`)
-      .then((res) => res.json())
-      .then((cart) => {
-        // Calculate subtotal of regular products ONLY (ignoring gifts)
-        const eligibleTotal = cart.items.reduce((sum, item) => {
-          if (item.variant_id === v1 || item.variant_id === v2) return sum;
-          return sum + item.original_line_price;
-        }, 0);
+  fetch(`${routes.cart_url}.js`)
+    .then((res) => res.json())
+    .then((cart) => {
+      // Calculate eligible subtotal EXCLUDING the free gifts
+      const eligibleTotal = cart.items.reduce((sum, item) => {
+        if (item.variant_id === v1 || item.variant_id === v2) return sum;
+        return sum + item.original_line_price;
+      }, 0);
 
-        const currentQty1 = cart.items
-          .filter((i) => i.variant_id === v1)
-          .reduce((s, i) => s + i.quantity, 0);
+      const currentQty1 = cart.items
+        .filter((i) => i.variant_id === v1)
+        .reduce((sum, i) => sum + i.quantity, 0);
 
-        const currentQty2 = cart.items
-          .filter((i) => i.variant_id === v2)
-          .reduce((s, i) => s + i.quantity, 0);
+      const currentQty2 = cart.items
+        .filter((i) => i.variant_id === v2)
+        .reduce((sum, i) => sum + i.quantity, 0);
 
-        const targetQty1 = Boolean(v1 && t1 && eligibleTotal >= t1) ? 1 : 0;
-        const targetQty2 = Boolean(v2 && t2 && eligibleTotal >= t2) ? 1 : 0;
+      const targetQty1 = Boolean(v1 && t1 && eligibleTotal >= t1) ? 1 : 0;
+      const targetQty2 = Boolean(v2 && t2 && eligibleTotal >= t2) ? 1 : 0;
 
-        // Exit if cart already has the required gift counts
-        if (currentQty1 === targetQty1 && currentQty2 === targetQty2) {
-          return;
-        }
+      // If cart already matches target quantities, exit immediately
+      if (currentQty1 === targetQty1 && currentQty2 === targetQty2) {
+        return;
+      }
 
-        this.isSyncing = true;
-        const sections = this.getSectionsToRender().map((s) => s.id);
+      this.isSyncing = true;
+      const sections = this.getSectionsToRender().map((s) => s.id);
 
-        // Items that need to be ADDED (requires /cart/add.js)
-        const itemsToAdd = [];
-        if (v1 && currentQty1 === 0 && targetQty1 === 1) itemsToAdd.push({ id: v1, quantity: 1 });
-        if (v2 && currentQty2 === 0 && targetQty2 === 1) itemsToAdd.push({ id: v2, quantity: 1 });
+      // 1. Items needing initial injection (requires /cart/add.js)
+      const itemsToAdd = [];
+      if (v1 && currentQty1 === 0 && targetQty1 === 1) itemsToAdd.push({ id: v1, quantity: 1 });
+      if (v2 && currentQty2 === 0 && targetQty2 === 1) itemsToAdd.push({ id: v2, quantity: 1 });
 
-        // Items that need to be REMOVED (requires /cart/update.js)
-        const updates = {};
-        if (v1 && currentQty1 > 0 && targetQty1 === 0) updates[v1] = 0;
-        if (v2 && currentQty2 > 0 && targetQty2 === 0) updates[v2] = 0;
+      // 2. Items needing quantity reduction or removal (requires /cart/update.js)
+      const updates = {};
+      if (v1 && currentQty1 > 0 && currentQty1 !== targetQty1) updates[v1] = targetQty1;
+      if (v2 && currentQty2 > 0 && currentQty2 !== targetQty2) updates[v2] = targetQty2;
 
-        let requestPromise;
+      let syncPromise = Promise.resolve();
 
-        if (itemsToAdd.length > 0) {
-          requestPromise = fetch(`${routes.cart_add_url}.js`, {
+      // Execute updates/removals first if needed
+      if (Object.keys(updates).length > 0) {
+        syncPromise = syncPromise.then(() =>
+          fetch(`${routes.cart_update_url}`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ updates, sections: itemsToAdd.length > 0 ? [] : sections })
+          }).then((res) => res.json())
+        );
+      }
+
+      // Execute additions second if needed
+      if (itemsToAdd.length > 0) {
+        syncPromise = syncPromise.then(() =>
+          fetch(`${routes.cart_add_url}.js`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify({ items: itemsToAdd, sections })
-          });
-        } else if (Object.keys(updates).length > 0) {
-          requestPromise = fetch(`${routes.cart_update_url}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({ updates, sections })
-          });
-        }
+          }).then((res) => res.json())
+        );
+      }
 
-        if (!requestPromise) {
+      return syncPromise
+        .then((response) => {
+          if (response && response.sections) {
+            this.renderContents(response);
+          }
+        })
+        .catch((err) => console.error('Gift sync error:', err))
+        .finally(() => {
           this.isSyncing = false;
-          return;
-        }
-
-        return requestPromise
-          .then((res) => res.json())
-          .then((response) => {
-            if (response && response.sections) {
-              this.renderContents(response);
-            }
-          })
-          .catch((err) => console.error('Gift sync error:', err))
-          .finally(() => {
-            this.isSyncing = false;
-          });
-      })
-      .catch((err) => console.error('Cart read error:', err));
-  }
+        });
+    })
+    .catch((err) => console.error('Cart read error:', err));
+}
 }
 
 customElements.define('cart-drawer', CartDrawer);
