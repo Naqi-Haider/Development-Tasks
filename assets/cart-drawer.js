@@ -131,29 +131,35 @@ class CartDrawer extends HTMLElement {
   syncGifts() {
     if (this.isSyncing) return;
 
-    const t1 = parseInt(this.dataset.threshold1, 10);
-    const v1 = parseInt(this.dataset.variant1, 10);
-    const t2 = parseInt(this.dataset.threshold2, 10);
-    const v2 = parseInt(this.dataset.variant2, 10);
+    // Use getAttribute to reliably read hyphenated number attributes
+    const t1 = parseInt(this.getAttribute('data-threshold-1'), 10);
+    const v1 = parseInt(this.getAttribute('data-variant-1'), 10);
+    const t2 = parseInt(this.getAttribute('data-threshold-2'), 10);
+    const v2 = parseInt(this.getAttribute('data-variant-2'), 10);
 
     if (!v1 && !v2) return;
 
     fetch(`${routes.cart_url}.js`)
       .then((res) => res.json())
       .then((cart) => {
-        // Subtotal of regular products ONLY (ignoring gifts)
+        // Calculate subtotal of regular products ONLY (ignoring gifts)
         const eligibleTotal = cart.items.reduce((sum, item) => {
           if (item.variant_id === v1 || item.variant_id === v2) return sum;
           return sum + item.original_line_price;
         }, 0);
 
-        const currentQty1 = cart.items.filter((i) => i.variant_id === v1).reduce((s, i) => s + i.quantity, 0);
-        const currentQty2 = cart.items.filter((i) => i.variant_id === v2).reduce((s, i) => s + i.quantity, 0);
+        const currentQty1 = cart.items
+          .filter((i) => i.variant_id === v1)
+          .reduce((s, i) => s + i.quantity, 0);
+
+        const currentQty2 = cart.items
+          .filter((i) => i.variant_id === v2)
+          .reduce((s, i) => s + i.quantity, 0);
 
         const targetQty1 = Boolean(v1 && t1 && eligibleTotal >= t1) ? 1 : 0;
         const targetQty2 = Boolean(v2 && t2 && eligibleTotal >= t2) ? 1 : 0;
 
-        // Exit if cart already has the correct gift quantities
+        // Exit if cart already has the required gift counts
         if (currentQty1 === targetQty1 && currentQty2 === targetQty2) {
           return;
         }
@@ -161,12 +167,12 @@ class CartDrawer extends HTMLElement {
         this.isSyncing = true;
         const sections = this.getSectionsToRender().map((s) => s.id);
 
-        // 1. Identify items to ADD (use /cart/add.js)
+        // Items that need to be ADDED (requires /cart/add.js)
         const itemsToAdd = [];
         if (v1 && currentQty1 === 0 && targetQty1 === 1) itemsToAdd.push({ id: v1, quantity: 1 });
         if (v2 && currentQty2 === 0 && targetQty2 === 1) itemsToAdd.push({ id: v2, quantity: 1 });
 
-        // 2. Identify items to REMOVE (use /cart/update.js)
+        // Items that need to be REMOVED (requires /cart/update.js)
         const updates = {};
         if (v1 && currentQty1 > 0 && targetQty1 === 0) updates[v1] = 0;
         if (v2 && currentQty2 > 0 && targetQty2 === 0) updates[v2] = 0;
@@ -176,15 +182,26 @@ class CartDrawer extends HTMLElement {
         if (itemsToAdd.length > 0) {
           requestPromise = fetch(`${routes.cart_add_url}.js`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
             body: JSON.stringify({ items: itemsToAdd, sections })
           });
         } else if (Object.keys(updates).length > 0) {
           requestPromise = fetch(`${routes.cart_update_url}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
             body: JSON.stringify({ updates, sections })
           });
+        }
+
+        if (!requestPromise) {
+          this.isSyncing = false;
+          return;
         }
 
         return requestPromise
