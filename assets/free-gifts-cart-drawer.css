@@ -2,15 +2,18 @@
     visibility: hidden;
 }
 
-/* Lock and style free gift rows */
 .cart-item--gift .quantity-popover-container,
-.cart-item--gift cart-remove-button {
+.cart-item--gift cart-remove-button,
+.cart-item--gift .cart-item__quantity-wrapper .quantity {
     display: none !important;
 }
 
+/* Show clean static quantity indicator */
 .cart-item--gift-qty {
     font-size: 1.3rem;
     font-weight: 600;
+    display: inline-block;
+    padding: 0.5rem 0;
 }
 
 .badge--gift {
