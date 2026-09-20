@@ -7,9 +7,17 @@ class CartDrawer extends HTMLElement {
     this.setHeaderCartIconAccessibility();
 
     //Listen to in-drawer quantity and cart modifications:
-    if(typeof subscribe != 'undefined' && typeof PUB_SUB_EVENTS != undefined){
-      subscribe(PUB_SUB_EVENTS.cartUpdate, () => {
-        if(!this.isSyncing){
+    //Correcting the type coercion and quotes around undefined.
+    if (typeof subscribe !== 'undefined' && typeof PUB_SUB_EVENTS !== 'undefined') {
+      subscribe(PUB_SUB_EVENTS.cartUpdate, (event) => {
+
+        const count = event?.cartData?.item_count ?? event?.cart?.item_count;
+        if (count === 0) {
+          this.classList.add('is-empty');
+          this.querySelector('.drawer__inner')?.classList.add('is-empty');
+        }
+
+        if (!this.isSyncing) {
           this.syncGifts();
         }
       })
@@ -90,8 +98,7 @@ class CartDrawer extends HTMLElement {
   }
 
   renderContents(parsedState) {
-    this.querySelector('.drawer__inner').classList.contains('is-empty') &&
-      this.querySelector('.drawer__inner').classList.remove('is-empty');
+    //Resolving the .is-empty cart drawer case:
     this.productId = parsedState.id;
     this.getSectionsToRender().forEach((section) => {
       const sectionElement = section.selector
@@ -102,9 +109,20 @@ class CartDrawer extends HTMLElement {
       sectionElement.innerHTML = this.getSectionInnerHTML(parsedState.sections[section.id], section.selector);
     });
 
+    //Toggle empty state class so Dawn displays the empty warnings
+    //and Continue shopping button.
+    const isCartEmpty = parsedState.item_count === 0 || this.querySelector('.drawer__inner-empty') !== null;
+
+    this.classList.toggle('is-empty', isCartEmpty);
+    this.querySelector('.drawer__inner')?.classList.toggle('is-empty', isCartEmpty);
+
+
     setTimeout(() => {
       this.querySelector('#CartDrawer-Overlay').addEventListener('click', this.close.bind(this));
-      this.open();
+      //If isCartEmpty is not true:
+      if (!this.classList.contains('active') && !isCartEmpty) {
+        this.open();
+      }
     });
 
     if (!this.isSyncing) {
@@ -113,7 +131,9 @@ class CartDrawer extends HTMLElement {
   }
 
   getSectionInnerHTML(html, selector = '.shopify-section') {
-    return new DOMParser().parseFromString(html, 'text/html').querySelector(selector).innerHTML;
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const el = selector ? doc.querySelector(selector) : doc.querySelector('.shopify-section');
+    return el ? el.innerHTML : doc.body.innerHTML;
   }
 
   getSectionsToRender() {
@@ -138,90 +158,107 @@ class CartDrawer extends HTMLElement {
 
   //Sync Gifts code inside this web component class:
   syncGifts() {
-  if (this.isSyncing) return;
+    if (this.isSyncing) return;
+    this.isSyncing = true;
 
-  const t1 = parseInt(this.getAttribute('data-threshold-1'), 10);
-  const v1 = parseInt(this.getAttribute('data-variant-1'), 10);
-  const t2 = parseInt(this.getAttribute('data-threshold-2'), 10);
-  const v2 = parseInt(this.getAttribute('data-variant-2'), 10);
+    const t1 = parseInt(this.getAttribute('data-threshold-1'), 10);
+    const v1 = parseInt(this.getAttribute('data-variant-1'), 10);
+    const t2 = parseInt(this.getAttribute('data-threshold-2'), 10);
+    const v2 = parseInt(this.getAttribute('data-variant-2'), 10);
 
-  if (!v1 && !v2) return;
+    if (!v1 && !v2) {
+      this.isSyncing = false;
+      return;
+    }
 
-  fetch(`${routes.cart_url}.js`)
-    .then((res) => res.json())
-    .then((cart) => {
-      // Calculate eligible subtotal EXCLUDING the free gifts
-      const eligibleTotal = cart.items.reduce((sum, item) => {
-        if (item.variant_id === v1 || item.variant_id === v2) return sum;
-        return sum + item.original_line_price;
-      }, 0);
+    fetch(`${routes.cart_url}.js?_=${Date.now()}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((cart) => {
+        //If the cart is completely empty:
+        if (cart.item_count === 0) {
+          this.classList.add('is-empty');
+          this.querySelector('.drawer__inner')?.classList.add('is-empty');
 
-      const currentQty1 = cart.items
-        .filter((i) => i.variant_id === v1)
-        .reduce((sum, i) => sum + i.quantity, 0);
-
-      const currentQty2 = cart.items
-        .filter((i) => i.variant_id === v2)
-        .reduce((sum, i) => sum + i.quantity, 0);
-
-      const targetQty1 = Boolean(v1 && t1 && eligibleTotal >= t1) ? 1 : 0;
-      const targetQty2 = Boolean(v2 && t2 && eligibleTotal >= t2) ? 1 : 0;
-
-      // If cart already matches target quantities, exit immediately
-      if (currentQty1 === targetQty1 && currentQty2 === targetQty2) {
-        return;
-      }
-
-      this.isSyncing = true;
-      const sections = this.getSectionsToRender().map((s) => s.id);
-
-      // 1. Items needing initial injection (requires /cart/add.js)
-      const itemsToAdd = [];
-      if (v1 && currentQty1 === 0 && targetQty1 === 1) itemsToAdd.push({ id: v1, quantity: 1 });
-      if (v2 && currentQty2 === 0 && targetQty2 === 1) itemsToAdd.push({ id: v2, quantity: 1 });
-
-      // 2. Items needing quantity reduction or removal (requires /cart/update.js)
-      const updates = {};
-      if (v1 && currentQty1 > 0 && currentQty1 !== targetQty1) updates[v1] = targetQty1;
-      if (v2 && currentQty2 > 0 && currentQty2 !== targetQty2) updates[v2] = targetQty2;
-
-      let syncPromise = Promise.resolve();
-
-      // Execute updates/removals first if needed
-      if (Object.keys(updates).length > 0) {
-        syncPromise = syncPromise.then(() =>
-          fetch(`${routes.cart_update_url}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ updates, sections: itemsToAdd.length > 0 ? [] : sections })
-          }).then((res) => res.json())
-        );
-      }
-
-      // Execute additions second if needed
-      if (itemsToAdd.length > 0) {
-        syncPromise = syncPromise.then(() =>
-          fetch(`${routes.cart_add_url}.js`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ items: itemsToAdd, sections })
-          }).then((res) => res.json())
-        );
-      }
-
-      return syncPromise
-        .then((response) => {
-          if (response && response.sections) {
-            this.renderContents(response);
-          }
-        })
-        .catch((err) => console.error('Gift sync error:', err))
-        .finally(() => {
           this.isSyncing = false;
-        });
-    })
-    .catch((err) => console.error('Cart read error:', err));
-}
+          return;
+        }
+
+
+        // Calculate eligible subtotal EXCLUDING the free gifts
+        const eligibleTotal = cart.items.reduce((sum, item) => {
+          if (item.variant_id === v1 || item.variant_id === v2) return sum;
+          return sum + item.original_line_price;
+        }, 0);
+
+        const currentQty1 = cart.items
+          .filter((i) => i.variant_id === v1)
+          .reduce((sum, i) => sum + i.quantity, 0);
+
+        const currentQty2 = cart.items
+          .filter((i) => i.variant_id === v2)
+          .reduce((sum, i) => sum + i.quantity, 0);
+
+        const targetQty1 = Boolean(v1 && t1 && eligibleTotal >= t1) ? 1 : 0;
+        const targetQty2 = Boolean(v2 && t2 && eligibleTotal >= t2) ? 1 : 0;
+
+        // If cart already matches target quantities, exit immediately
+        if (currentQty1 === targetQty1 && currentQty2 === targetQty2) {
+          this.isSyncing = false;
+          return;
+        }
+
+        const sections = this.getSectionsToRender().map((s) => s.id);
+
+        // 1. Items needing initial injection (requires /cart/add.js)
+        const itemsToAdd = [];
+        if (v1 && currentQty1 === 0 && targetQty1 === 1) itemsToAdd.push({ id: v1, quantity: 1 });
+        if (v2 && currentQty2 === 0 && targetQty2 === 1) itemsToAdd.push({ id: v2, quantity: 1 });
+
+        // 2. Items needing quantity reduction or removal (requires /cart/update.js)
+        const updates = {};
+        if (v1 && currentQty1 > 0 && currentQty1 !== targetQty1) updates[v1] = targetQty1;
+        if (v2 && currentQty2 > 0 && currentQty2 !== targetQty2) updates[v2] = targetQty2;
+
+        let syncPromise = Promise.resolve();
+
+        // Execute updates/removals first if needed
+        if (Object.keys(updates).length > 0) {
+          syncPromise = syncPromise.then(() =>
+            fetch(`${routes.cart_update_url}.js`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ updates, sections: itemsToAdd.length > 0 ? [] : sections })
+            }).then((res) => res.json())
+          );
+        }
+
+        // Execute additions second if needed
+        if (itemsToAdd.length > 0) {
+          syncPromise = syncPromise.then(() =>
+            fetch(`${routes.cart_add_url}.js`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({ items: itemsToAdd, sections })
+            }).then((res) => res.json())
+          );
+        }
+
+        return syncPromise
+          .then((response) => {
+            if (response && response.sections) {
+              this.renderContents(response);
+            }
+          })
+          .catch((err) => console.error('Gift sync error:', err))
+          .finally(() => {
+            this.isSyncing = false;
+          });
+      })
+      .catch((err) => {
+        console.error('Cart Read error: ', err);
+        this.isSyncing = false;
+      });
+  }
 }
 
 customElements.define('cart-drawer', CartDrawer);
@@ -240,6 +277,69 @@ class CartDrawerItems extends CartItems {
         selector: '.shopify-section',
       },
     ];
+  }
+  //For the quantity updation 
+  updateQuantity(line, quantity, event, name, variantId) {
+    const lineItem = document.getElementById(`CartDrawer-Item-${line}`);
+    const targetVariantId =
+      variantId ||
+      lineItem?.querySelector('[data-quantity-variant-id]')?.getAttribute('data-quantity-variant-id') ||
+      lineItem?.querySelector('[data-variant-id]')?.getAttribute('data-variant-id');
+
+    if (targetVariantId) {
+      this.enableLoading(line);
+
+      // 1. Fetch current cart state to get all split line keys for this variant
+      fetch(`${routes.cart_url}.js?_=${Date.now()}`, { cache: 'no-store' })
+        .then((res) => res.json())
+        .then((cart) => {
+          const matchingLines = cart.items.filter(
+            (item) => String(item.variant_id) === String(targetVariantId)
+          );
+          const updates = {};
+
+          if (matchingLines.length > 0) {
+            // Assign target quantity to the primary key
+            updates[matchingLines[0].key] = quantity;
+
+            // Zero out any other split lines for this same variant
+            for (let i = 1; i < matchingLines.length; i++) {
+              updates[matchingLines[i].key] = 0;
+            }
+          }
+
+          // 2. Post updates using actual line item keys to the .js endpoint
+          return fetch(`${routes.cart_update_url}.js`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ updates }),
+          });
+        })
+        .then((res) => res.json())
+        .then((cartData) => {
+          // 3. Fetch re-rendered drawer sections
+          const sectionNames = this.getSectionsToRender().map((s) => s.section).join(',');
+          return fetch(`${routes.cart_url}?sections=${sectionNames}&_=${Date.now()}`, { cache: 'no-store' })
+            .then((res) => res.json())
+            .then((sections) => ({ ...cartData, sections }));
+        })
+        .then((parsedState) => {
+          this.classList.toggle('is-empty', parsedState.item_count === 0);
+          const cartDrawer = document.querySelector('cart-drawer');
+          if (cartDrawer) {
+            cartDrawer.classList.toggle('is-empty', parsedState.item_count === 0);
+            cartDrawer.renderContents(parsedState);
+          }
+          this.disableLoading(line);
+        })
+        .catch((e) => {
+          console.error('Quantity update failed:', e);
+          this.disableLoading(line);
+        });
+      return;
+    }
+
+    super.updateQuantity(line, quantity, event, name, variantId);
   }
 }
 
