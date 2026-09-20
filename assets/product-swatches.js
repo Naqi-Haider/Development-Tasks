@@ -20,7 +20,7 @@ class ProductSwatches {
 
     initHistory() {
         window.addEventListener('popstate', () => {
-            const url = window.location.pathname;
+            const url = window.location.pathname + window.location.search;
             this.loadProduct(url, false);
         })
     }
@@ -78,16 +78,60 @@ class ProductSwatches {
             // Replace:
             currentSection.replaceWith(newSection);
 
+            await this.updateCartBubble();
+
             // Only create a history when the user clicks on a swatch:
             if (updateHistory) {
                 // history.pushState changes the url of the browser without refresh
                 // to get the updated content we used popstate
-                history.pushState({}, '', url); 
+                history.pushState({}, '', url);
             }
 
         } catch (error) {
             console.error(error);
         }
+    }
+
+    async updateCartBubble() {
+        try {
+            const response = await fetch('/cart.js');
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch cart');
+            }
+
+            const cart = await response.json();
+
+            const cartIcon = document.querySelector('#cart-icon-bubble');
+
+            if (!cartIcon) return;
+
+            let bubble = cartIcon.querySelector('.cart-count-bubble');
+
+            if (cart.item_count > 0) {
+
+                if (!bubble) {
+                    bubble = document.createElement('div');
+                    bubble.className = 'cart-count-bubble';
+                    cartIcon.appendChild(bubble);
+                }
+
+                bubble.innerHTML = `
+                <span aria-hidden="true">${cart.item_count}</span>
+                <span class="visually-hidden">
+                    ${cart.item_count} items
+                </span>
+            `;
+
+            } else {
+                if (bubble) {
+                    bubble.remove();
+                }
+            }
+        } catch (error) {
+            console.error('Cart bubble update failed:', error);
+        }
+
     }
 }
 
