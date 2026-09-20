@@ -491,14 +491,19 @@
                     block: block,
                     product_form_id: product_form_id
                   %}
-                {%- when 'buy_buttons' -%}
-                  {%- render 'buy-buttons',
-                    block: block,
-                    product: product,
-                    product_form_id: product_form_id,
-                    section_id: section.id,
-                    show_pickup_availability: true
-                  -%}
+                {% if product.id == settings.gift_1_product.id or product.id == settings.gift_2_product.id %}
+                    <p class="product__gift-note">
+                      This is a free gift. It will be added automatically when your cart reaches the qualifying amount.
+                    </p>
+                  {%- else -%}
+                    {%- render 'buy-buttons',
+                      block: block,
+                      product: product,
+                      product_form_id: product_form_id,
+                      section_id: section.id,
+                      show_pickup_availability: true
+                    -%}
+                  {% endif %}
                 {%- when 'rating' -%}
                   {%- if product.metafields.reviews.rating.value != blank -%}
                     <div class="rating-wrapper">

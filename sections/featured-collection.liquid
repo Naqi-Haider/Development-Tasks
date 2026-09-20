@@ -106,6 +106,10 @@
           {% assign lazy_load = false %}
           {% paginate section.settings.collection.products by section.settings.products_to_show %}
             {%- for product in section.settings.collection.products limit: section.settings.products_to_show -%}
+              {% comment %} Skip the gift products: {% endcomment %}
+              {%- if product.id == settings.gift_1_product.id or product.id == settings.gift_2_product.id -%}
+                {%- continue -%}
+              {%- endif -%}
               {% if lazy_load == false and forloop.index > max_columns_to_show %}
                 {% assign lazy_load = true %}
               {% endif %}
