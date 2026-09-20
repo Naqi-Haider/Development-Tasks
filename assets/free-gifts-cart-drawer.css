@@ -131,3 +131,17 @@
     border-width: 0 0.2rem 0.2rem 0;
     transform: translate(-50%, -60%) rotate(45deg);
 }
+
+#CartDrawer .cart-drawer__tier-track>.cart-drawer__tier-fill {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    display: block !important;
+    height: auto !important;
+    min-height: 0.8rem !important;
+    background: linear-gradient(90deg, #34d399, #10b981) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+}
