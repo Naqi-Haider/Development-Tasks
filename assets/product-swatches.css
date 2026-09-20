@@ -1,0 +1,26 @@
+.product-swatches {
+    margin: 20px 0;
+}
+
+.product-swatches__list {
+    display: flex;
+    gap: 10px;
+}
+
+.product-swatch {
+    display: block;
+    width: 60px;
+    text-decoration: none;
+}
+
+.product-swatch img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.product-swatch.active {
+    outline: 2px solid black;
+    outline-offset: 3px;
+}

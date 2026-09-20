@@ -1,0 +1,28 @@
+{% comment %} Fetch the metafields of the product {% endcomment %}
+
+{{ 'product-swatches.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'product-swatches.js' | asset_url }}" defer></script>
+
+{%- assign linked_products = product.metafields.custom.linked_products.value -%}
+
+{% if linked_products != blank %}
+  <div id="ProductPage" data-section-id="{{ section.id }}">
+    <div class="product-swatches">
+      <span class="product-swatches__label"> Color </span>
+
+      <div class="product-swatches__list">
+        {% for linked_product in linked_products %}
+          <a href="{{ linked_product.url }}" class="product-swatch" data-product-url="{{ linked_product.url }}">
+            {% if linked_product.featured_image %}
+              {{ linked_product.featured_image | image_url: width: 100 | image_tag: loading: 'lazy' }}
+            {% endif %}
+
+            {% comment %} <span>
+              {{ linked_product.title }}
+            </span> {% endcomment %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endif %}
