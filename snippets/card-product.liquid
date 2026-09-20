@@ -41,6 +41,16 @@
     endif
   -%}
 
+  {% comment %} This is for quick add button {% endcomment %}
+
+  {%- liquid
+    if card_product != blank and settings.gift_1_product != blank
+      if card_product.id == settings.gift_1_product.id or card_product.id == settings.gift_2_product.id
+        assign quick_add = 'none'
+      endif
+    endif
+  -%}
+
   <product-component view-event-payload="{{ card_product | standard_event_data: 'view', context: product_view_context | escape }}">
     <div class="card-wrapper product-card-wrapper underline-links-hover">
       <div
