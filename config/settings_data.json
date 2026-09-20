@@ -126,6 +126,10 @@
     "show_cart_note": false,
     "cart_drawer_collection": "",
     "cart_color_scheme": "scheme-1",
+    "gift_1_threshold": 600,
+    "gift_1_product": "free-gloves",
+    "gift_2_threshold": 1000,
+    "gift_2_product": "free-beenie",
     "customer_account_menu": "customer-account-main-menu",
     "sections": {
       "main-password-header": {

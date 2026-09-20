@@ -1,11 +1,13 @@
+{%- render 'cart-drawer' -%}
+
+{% comment %} Finally shifted from section to global theme {% endcomment %}
+{% comment %} {% schema %}
 {%- render 'cart-drawer',
   gift_1_threshold: section.settings.gift_1_threshold,
   gift_1_product: section.settings.gift_1_product,
   gift_2_threshold: section.settings.gift_2_threshold,
   gift_2_product: section.settings.gift_2_product
 -%}
-
-{% schema %}
 {
   "name": "Cart Drawer",
   "settings": [
@@ -33,4 +35,4 @@
     }
   ]
 }
-{% endschema %}
+{% endschema %} {% endcomment %}

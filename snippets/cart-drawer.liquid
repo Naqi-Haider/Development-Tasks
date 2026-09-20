@@ -21,15 +21,21 @@
 </style>
 
 {% comment %} Get the available variant of the free gift products {% endcomment %}
-{%- assign gift_1_variant = gift_1_product.selected_or_first_available_variant -%}
-{%- assign gift_2_variant = gift_2_product.selected_or_first_available_variant -%}
+{% comment %}
+  {%- assign gift_1_variant = gift_1_product.selected_or_first_available_variant -%}
+  {%- assign gift_2_variant = gift_2_product.selected_or_first_available_variant -%}
+{% endcomment %}
 
-{% comment %} Pass these values inside the web-component {% endcomment %}
+{% comment %} Getting available variant of free gift products from global {% endcomment %}
+{%- assign gift_1_variant = settings.gift_1_product.selected_or_first_available_variant -%}
+{%- assign gift_2_variant = settings.gift_2_product.selected_or_first_available_variant -%}
+
+{% comment %} Pass these values inside the cart-drawer component {% endcomment %}
 <cart-drawer
   class="drawer{% if cart == empty %} is-empty{% endif %}"
-  data-threshold-1="{{ gift_1_threshold | times: 100 }}"
+  data-threshold-1="{{ settings.gift_1_threshold | times: 100 }}"
   data-variant-1="{{ gift_1_variant.id }}"
-  data-threshold-2="{{ gift_2_threshold | times: 100 }}"
+  data-threshold-2="{{ settings.gift_2_threshold | times: 100 }}"
   data-variant-2="{{ gift_2_variant.id }}"
 >
   <div id="CartDrawer" class="cart-drawer">
@@ -41,6 +47,54 @@
       aria-label="{{ 'sections.cart.title' | t }}"
       tabindex="-1"
     >
+      {%- liquid
+        assign t1_cents = settings.gift_1_threshold | times: 100
+        assign t2_cents = settings.gift_2_threshold | times: 100
+        assign eligible_spend = 0
+
+        for item in cart.items
+          unless item.variant_id == gift_1_variant.id or item.variant_id == gift_2_variant.id
+            assign eligible_spend = eligible_spend | plus: item.original_line_price
+          endunless
+        endfor
+
+        if eligible_spend < t1_cents
+          assign diff = t1_cents | minus: eligible_spend | money
+          assign bar_message = 'Add ' | append: diff | append: ' more to unlock ' | append: settings.gift_1_product.title
+          assign bar_progress = eligible_spend | times: 50.0 | divided_by: t1_cents
+        elsif eligible_spend < t2_cents
+          assign diff = t2_cents | minus: eligible_spend | money
+          assign bar_message = 'Add ' | append: diff | append: ' more to unlock ' | append: settings.gift_2_product.title
+          assign tier2_range = t2_cents | minus: t1_cents
+          assign current_tier2_spend = eligible_spend | minus: t1_cents
+          assign tier2_percent = current_tier2_spend | times: 50.0 | divided_by: tier2_range
+          assign bar_progress = 50.0 | plus: tier2_percent
+        else
+          assign bar_message = '🎉 You unlocked all free gifts!'
+          assign bar_progress = 100.0
+        endif
+      -%}
+      {% comment %} Tier Progress bar {% endcomment %}
+      {% unless cart == empty %}
+        <div class="cart-drawer__tier-progress">
+          <p class="cart-drawer__tier-message">{{ bar_message }}</p>
+          <div class="cart-drawer__tier-track">
+            <div class="cart-drawer__tier-fill" style="width: {{ bar_progress | at_most: 100 }}%;"></div>
+            <span
+              class="cart-drawer__tier-point tier-1{% if eligible_spend >= t1_cents %} is-active{% endif %}"
+              style="left: 50%;"
+            ></span>
+            <span
+              class="cart-drawer__tier-point tier-2{% if eligible_spend >= t2_cents %} is-active{% endif %}"
+              style="left: 100%;"
+            ></span>
+          </div>
+          <div class="cart-drawer__tier-labels">
+            <span>{{ settings.gift_1_product.title }}</span>
+            <span>{{ settings.gift_2_product.title }}</span>
+          </div>
+        </div>
+      {% endunless %}
       {%- if cart == empty -%}
         <div class="drawer__inner-empty">
           <div class="cart-drawer__warnings center{% if settings.cart_drawer_collection != blank %} cart-drawer__warnings--has-collection{% endif %}">
@@ -133,12 +187,42 @@
                   </thead>
 
                   <tbody role="rowgroup">
+                    {%- assign rendered_variants = '' -%}
                     {%- for item in cart.items -%}
-                      {% comment %} Check if the item is a free gift or not {% endcomment %}
-                      {% assign is_gift = false %}
+                      {%- assign is_gift = false -%}
                       {%- if item.variant_id == gift_1_variant.id or item.variant_id == gift_2_variant.id -%}
-                        {% assign is_gift = true %}
-                      {% endif %}
+                        {%- assign is_gift = true -%}
+                      {%- endif -%}
+
+                      {%- comment -%} Skip duplicate non-gift variants so they do not render multiple rows {%- endcomment -%}
+                      {%- unless is_gift -%}
+                        {%- assign var_id_string = item.variant_id | append: ',' -%}
+                        {%- if rendered_variants contains var_id_string -%}
+                          {%- continue -%}
+                        {%- endif -%}
+                        {%- assign rendered_variants = rendered_variants | append: var_id_string -%}
+                      {%- endunless -%}
+
+                      {%- comment -%} Sum totals across all split backend keys for this single display row {%- endcomment -%}
+                      {%- assign item_display_qty = 0 -%}
+                      {%- assign item_display_price = 0 -%}
+                      {%- assign item_display_original_price = 0 -%}
+
+                      {%- if is_gift -%}
+                        {%- assign item_display_qty = item.quantity -%}
+                        {%- assign item_display_price = item.final_line_price -%}
+                        {%- assign item_display_original_price = item.original_line_price -%}
+                      {%- else -%}
+                        {%- for line in cart.items -%}
+                          {%- if line.variant_id == item.variant_id -%}
+                            {%- assign item_display_qty = item_display_qty | plus: line.quantity -%}
+                            {%- assign item_display_price = item_display_price | plus: line.final_line_price -%}
+                            {%- assign item_display_original_price = item_display_original_price
+                              | plus: line.original_line_price
+                            -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                      {%- endif -%}
                       <tr
                         id="CartDrawer-Item-{{ item.index | plus: 1 }}"
                         class="cart-item{% if item.parent_relationship.parent != null %} cart-item__nested-line{% endif %} {% if is_gift %}cart-item--gift {% endif %}"
@@ -262,10 +346,12 @@
                             aria-label="{{ 'customer.order.discount' | t }}"
                           >
                             {%- for discount in item.line_level_discount_allocations -%}
-                              <li class="discounts__discount">
-                                {{- 'icon-discount.svg' | inline_asset_content -}}
-                                {{ discount.discount_application.title }}
-                              </li>
+                              {% if discount.amount > 0 %}
+                                <li class="discounts__discount">
+                                  {{- 'icon-discount.svg' | inline_asset_content -}}
+                                  {{ discount.discount_application.title }}
+                                </li>
+                              {% endif %}
                             {%- endfor -%}
                           </ul>
                         </td>
@@ -273,24 +359,26 @@
                         <td class="cart-item__totals right" role="cell" headers="CartDrawer-ColumnTotal">
                           {%- render 'loading-spinner' -%}
                           <div class="cart-item__price-wrapper">
-                            {%- if item.original_line_price != item.final_line_price -%}
+                            {%- if item_display_original_price != item_display_price
+                              and item_display_original_price > 0
+                            -%}
                               <div class="cart-item__discounted-prices">
                                 <span class="visually-hidden">
                                   {{ 'products.product.price.regular_price' | t }}
                                 </span>
                                 <s class="cart-item__old-price price price--end">
-                                  {{ item.original_line_price | money }}
+                                  {{ item_display_original_price | money }}
                                 </s>
                                 <span class="visually-hidden">
                                   {{ 'products.product.price.sale_price' | t }}
                                 </span>
                                 <span class="price price--end">
-                                  {{ item.final_line_price | money }}
+                                  {{ item_display_price | money }}
                                 </span>
                               </div>
                             {%- else -%}
                               <span class="price price--end">
-                                {{ item.original_line_price | money }}
+                                {{ item_display_price | money }}
                               </span>
                             {%- endif -%}
 
@@ -350,9 +438,10 @@
                                     data-quantity-variant-id="{{ item.variant.id }}"
                                     data-quantity-line-key="{{ item.key }}"
                                     name="updates[]"
-                                    value="{{ item.quantity }}"
+                                    value="{{ item_display_qty }}"
                                     {% # theme-check-disable %}
-                                    data-cart-quantity="{{ cart | item_count_for_variant: item.variant.id }}"
+                                    {% comment %} data-cart-quantity="{{ item_display_qty | item_count_for_variant: item.variant.id }}" {% endcomment %}
+                                    data-cart-quantity="{{ item_display_qty }}"
                                     min="0"
                                     data-min="{{ item.variant.quantity_rule.min }}"
                                     {% if item.variant.quantity_rule.max != null %}

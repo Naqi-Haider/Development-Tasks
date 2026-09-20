@@ -1449,6 +1449,32 @@
         "id": "cart_color_scheme",
         "label": "t:sections.all.colors.label",
         "default": "scheme-1"
+      },
+      {
+        "type": "header",
+        "content": "Free Gift Tiers"
+      },
+      {
+        "type": "number",
+        "id": "gift_1_threshold",
+        "label": "Tier 1 Threshold ($)",
+        "default": 60
+      },
+      {
+        "type": "product",
+        "id": "gift_1_product",
+        "label": "Tier 1 Gift Product"
+      },
+      {
+        "type": "number",
+        "id": "gift_2_threshold",
+        "label": "Tier 2 Threshold ($)",
+        "default": 100
+      },
+      {
+        "type": "product",
+        "id": "gift_2_product",
+        "label": "Tier 2 Gift Product"
       }
     ]
   },
