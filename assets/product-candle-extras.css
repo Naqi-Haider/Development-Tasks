@@ -504,3 +504,110 @@ product-info .product__star-rating {
     padding-top: 0.8rem;
     padding-bottom: 0.8rem;
 }
+
+/* ------------------------------------------------------- */
+/* Related Product Candle Styling: */
+/* ------------------------------------------------------- */
+
+.related-products-candle__heading {
+    font-family: var(--candle-heading-font-light, 'Work Sans', sans-serif);
+    font-weight: 300;
+    font-size: 35px;
+    line-height: 52.5px;
+    letter-spacing: -1.8px;
+    color: #000000;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    width: 100%;
+    margin-bottom: 70px;
+}
+
+/* .related-products-candle__heading::after {
+    content: "";
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: #000000;
+    margin: 0.6rem auto 0;
+} */
+
+.related-products-candle__grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns-desktop, 4), 1fr);
+    gap: 2rem 1.5rem;
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+}
+
+@media screen and (max-width: 749px) {
+    .related-products-candle__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.related-products-candle__item {
+    display: flex;
+    flex-direction: column;
+}
+
+.related-products-candle__media img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.related-products-candle__info {
+    text-align: center;
+    margin-top: 0.8rem;
+}
+
+.related-products-candle__title {
+    display: block;
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 25.5px;
+    letter-spacing: -1px;
+    color: #000000;
+    text-decoration: none;
+    text-transform: uppercase;
+    /* text-decoration: underline; */
+    /* text-underline-offset: 3px; */
+}
+
+.related-products-candle__subtitle {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 24px;
+    letter-spacing: -0.8px;
+    color: #686868;
+    margin: 0.2rem 0 1rem;
+}
+
+.related-products-candle__info .price,
+.related-products-candle__info .price .price-item {
+    font-family: var(--candle-price-font, 'Libre Baskerville', serif);
+    /* font-style: italic; */
+    font-weight: 400;
+    font-size: 13px;
+    color: #000000;
+    margin: 0.2rem 0 0;
+}
+
+.related-products-candle__quick-add {
+    margin-top: 0.8rem;
+    width: 100%;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 15px;
+    letter-spacing: -0.8px;
+    text-transform: uppercase;
+    border: none;
+    padding: 1rem;
+    cursor: pointer;
+}
