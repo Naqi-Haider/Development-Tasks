@@ -1,0 +1,506 @@
+/* Check */
+product-info .product__title,
+product-info .product__candle-subtitle-block,
+product-info .product__candle-burn-time,
+product-info .product__candle-fragrance,
+product-info .product__sku,
+product-info .product__star-rating,
+product-info .price {
+    text-align: center;
+}
+
+product-info .product__star-rating {
+    justify-content: center;
+}
+
+.product-form__buy-row .price-per-item__container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+/* reveal sections on scrolling feature override CSS */
+/* .product__info-container .scroll-trigger {
+    opacity: 1 !important;
+    transform: none !important;
+} */
+
+.product__candle-subtitle {
+    margin: 0 0 0.4rem;
+    color: rgba(var(--color-foreground), 0.75);
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-size: 17px;
+    letter-spacing: -1px;
+    /* text-transform: uppercase; */
+    /* letter-spacing: 0.1rem; */
+}
+
+.product__candle-burn-time {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 24px;
+    letter-spacing: 0px;
+    color: #000000;
+    margin: 0 0 1rem;
+}
+
+.product__candle-fragrance {
+    margin: 0 0 1.5rem;
+}
+
+.product__candle-fragrance-family,
+.product__candle-fragrance-notes {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 18px;
+    letter-spacing: -0.8px;
+    color: #000000;
+    margin: 0.2rem 0;
+}
+
+.product__shipping-bar {
+    display: block;
+    margin: 1rem 0 1.5rem;
+    padding: 0.8rem 0;
+    border-top: 1px solid rgba(var(--color-foreground), 0.08);
+    border-bottom: 1px solid rgba(var(--color-foreground), 0.08);
+}
+
+.product__shipping-bar-text {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 19.6px;
+    letter-spacing: 0px;
+    color: #000000;
+    margin: 0;
+    text-align: center;
+}
+
+.product-form__buy-row {
+    display: flex !important;
+    align-items: stretch;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.product-form__buy-row [id^="Quantity-Form-"] {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.product-form__buy-row .price-per-item__container,
+.product-form__buy-row .quantity {
+    height: 100%;
+}
+
+.product-form__buy-row .product-form__submit {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 15px;
+    text-transform: uppercase;
+    line-height: normal;
+    letter-spacing: -0.8px;
+    color: #F3F3F3;
+    transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+    border: 1px solid rgb(var(--color-foreground));
+}
+
+.product-form__buy-row>*:not([id^="Quantity-Form-"]) {
+    flex: 1 1 auto;
+    min-width: 12rem;
+    max-width: none !important;
+}
+
+.product-form__buy-row .product-form__buttons {
+    max-width: none !important;
+}
+
+/* 
+.product__shipping-bar-track {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(var(--color-foreground), 0.08);
+    overflow: hidden;
+}
+
+.product__shipping-bar-fill {
+    height: 100%;
+    background: rgb(var(--color-foreground));
+    transition: width 0.3s ease;
+} */
+
+.product__related-options {
+    margin: 2rem 0;
+}
+
+.product__related-options-title {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 17px;
+    line-height: normal;
+    letter-spacing: -1px;
+    color: #000000;
+    text-align: center;
+}
+
+.product__related-options-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(100px, 1fr));
+    gap: 0.8rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+    overflow: visible;
+}
+
+.product__related-options-item {
+    width: auto;
+}
+
+.product__related-options-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.product__related-options-item--current .product__related-options-link {
+    outline: none;
+}
+
+.product__related-options-image-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.product__related-options-name,
+.product__related-options-subtitle {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: -0.8px;
+    color: #686868;
+    text-align: center;
+    margin: 0.2rem 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product__related-options-price {
+    font-family: var(--candle-price-font, 'Libre Baskerville', serif);
+    /* font-style: italic; */
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0px;
+    color: #000000;
+    text-align: center;
+    margin: 0.2rem 0 0;
+}
+
+.product__star-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0.6rem 0;
+}
+
+.product__star-rating-stars {
+    --star-size: 1.6rem;
+    position: relative;
+    display: inline-block;
+    width: calc(var(--star-size) * 5);
+    height: var(--star-size);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23D9D9D9'%3E%3Cpath d='M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7L2 8.6l7.1-.6z'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-size: var(--star-size) var(--star-size);
+}
+
+.product__star-rating-stars::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: calc((var(--rating, 0) / 5) * 100%);
+    overflow: hidden;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23111111'%3E%3Cpath d='M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8L5.7 21l1.7-7L2 8.6l7.1-.6z'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-size: var(--star-size) var(--star-size);
+}
+
+.accordion__title {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Icons with text: */
+.icon-with-text__item .h4 {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 16px;
+    letter-spacing: -0.8px;
+    color: #000000;
+}
+
+.icon-with-text {
+    background-color: #F8F8F8;
+    padding: 2rem 1rem;
+    margin: 0;
+}
+
+.icon-with-text+.icon-with-text {
+    padding-top: 0;
+    margin-top: -1px;
+}
+
+.product__info-container .icon-with-text+.icon-with-text {
+    margin-top: 0;
+}
+
+.product__info-container .icon-with-text:has(+ .icon-with-text) {
+    margin-bottom: 0;
+}
+
+/* Custom Fonts override CSS: */
+
+.product__title h1 {
+    font-family: var(--candle-heading-font-light, 'Work Sans', sans-serif);
+    font-weight: 300;
+    font-style: normal;
+    font-size: 35px;
+    line-height: normal;
+    letter-spacing: -1.8px;
+    color: #000000;
+    text-transform: uppercase;
+}
+
+
+.price,
+.price .price-item {
+    font-family: var(--candle-price-font, 'Libre Baskerville', serif);
+    /* font-style: italic; */
+    font-weight: 400;
+    font-size: 14px;
+    line-height: normal;
+    letter-spacing: 0px;
+    color: #000000;
+}
+
+.product__description {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 15px;
+}
+
+.product__candle-subtitle {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+}
+
+.product__sku,
+.product__sku-label {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 10px;
+}
+
+/* Add to Cart button */
+.product-form__submit {
+    background-color: #000000;
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+    border: 1px solid rgb(var(--color-foreground));
+}
+
+.product-form__submit:hover {
+    background-color: transparent;
+    color: rgb(var(--color-foreground));
+}
+
+/* Quantity stepper wrapper (the bordered box with -, input, +) */
+.quantity {
+    border-radius: 4px;
+}
+
+/* The +/- buttons */
+.quantity__button {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+}
+
+/* The number input itself */
+.quantity__input {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 500;
+    font-size: 20px;
+    line-height: normal;
+    letter-spacing: 0px;
+    color: #000000;
+    text-align: center;
+    padding: 0;
+}
+
+
+/* The clickable heading row, e.g. "Fragrance Description" */
+.accordion__title {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: -0.8px;
+}
+
+/* The paragraph text inside, once expanded */
+.accordion__content {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 24px;
+    letter-spacing: -0.8px;
+    color: #000000;
+}
+
+
+.product__processing-note {
+    font-family: var(--candle-heading-font, 'Work Sans', sans-serif);
+    font-weight: 400;
+    font-size: 13px;
+    line-height: normal;
+    letter-spacing: -0.7px;
+    color: #656565;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background-color: #F6F1EA;
+    border-radius: 4px;
+    padding: 0.8rem 2rem;
+    margin: 1rem 0;
+}
+
+.product__processing-note-icon {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000000' stroke-width='2'%3E%3Cpath d='M3 8l3.5 3.5L13 5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.product__star-rating-count {
+    font-family: var(--candle-review-font, 'Roboto', sans-serif);
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 28px;
+    letter-spacing: 0px;
+    color: #898989;
+}
+
+/* For the thumbnail slider position: */
+@media screen and (min-width: 990px) {
+    media-gallery[data-desktop-layout="thumbnail"] {
+        display: grid !important;
+        grid-template-columns: 64px 1fr !important;
+    }
+
+    media-gallery[data-desktop-layout="thumbnail"] [id^="GalleryThumbnails-"] {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+    }
+
+    media-gallery[data-desktop-layout="thumbnail"] [id^="GalleryViewer-"] {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+    }
+
+    media-gallery[data-desktop-layout="thumbnail"] .thumbnail-list {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    media-gallery[data-desktop-layout="thumbnail"] .thumbnail-list__item {
+        width: 100% !important;
+    }
+
+    /* media-gallery[data-desktop-layout="thumbnail"] .thumbnail-list__item .thumbnail {
+        opacity: 1 !important;
+    } */
+
+    media-gallery[data-desktop-layout="thumbnail"] .thumbnail-list__item .thumbnail {
+        opacity: 0.5;
+        transition: opacity 0.2s ease;
+    }
+
+    media-gallery[data-desktop-layout="thumbnail"] .thumbnail-list__item .thumbnail[aria-current="true"] {
+        opacity: 1;
+    }
+}
+
+/* Hide the quantity label */
+.quantity__label {
+    display: none;
+}
+
+/* Standalone quantity block (sits above variant picker, not in buy-row) */
+.product-form__quantity {
+    flex: 0 0 auto;
+    width: fit-content;
+    max-width: none;
+    margin: 0 0 1.2rem;
+}
+
+.product-form__quantity .quantity {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    height: 4.2rem;
+    /* smaller than the ~4.6-5rem Add to Cart button */
+}
+
+.product-form__quantity .quantity__button {
+    width: 3.8rem;
+    flex: 0 0 3.8rem;
+}
+
+.product-form__quantity .quantity__input {
+    width: 3.6rem;
+    flex: 0 0 3.6rem;
+    text-align: center;
+    padding: 0;
+}
+
+.product__info-container>*+* {
+    margin: 0;
+}
+
+.product__info-container>div:has(.product__processing-note) {
+    margin-top: 0;
+}
+
+.product__processing-note {
+    margin: 0.5rem 0;
+}
+
+/* Space between accordion rows */
+.product__info-container>.product__accordion+.product__accordion {
+    margin-top: 0;
+    /* rely on the border-top between rows instead */
+}
+
+/* Internal padding of each row */
+.product__accordion .accordion__title,
+.product__accordion summary {
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
