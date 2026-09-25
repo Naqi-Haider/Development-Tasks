@@ -1,0 +1,26 @@
+{% comment %}
+  Renders the free-shipping message based on the live cart subtotal.
+  Accepts:
+  - threshold: {Number} dollar amount required for free shipping (optional, default 75)
+{% endcomment %}
+
+{%- liquid
+  assign threshold_dollars = threshold | default: 75
+  assign threshold_cents = threshold_dollars | times: 100
+  assign remaining_cents = threshold_cents | minus: cart.total_price
+  if remaining_cents < 0
+    assign remaining_cents = 0
+  endif
+-%}
+
+<shipping-progress-bar class="product__shipping-bar" data-threshold-cents="{{ threshold_cents }}">
+  <p class="product__shipping-bar-text caption" data-shipping-bar-text>
+    {%- if remaining_cents == 0 -%}
+      You've unlocked free shipping!
+    {%- else -%}
+      You're {{ remaining_cents | money }} away from free shipping
+    {%- endif -%}
+  </p>
+</shipping-progress-bar>
+
+<script src="{{ 'product-shipping-bar.js' | asset_url }}" defer="defer"></script>
