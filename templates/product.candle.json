@@ -188,8 +188,8 @@
         "padding_bottom": 0
       }
     },
-    "related-products": {
-      "type": "related-products",
+    "related-products-candle": {
+      "type": "related-products-candle",
       "settings": {
         "heading": "You may also like",
         "heading_size": "h2",
@@ -210,6 +210,6 @@
   "order": [
     "main",
     "disclosures",
-    "related-products"
+    "related-products-candle"
   ]
 }
