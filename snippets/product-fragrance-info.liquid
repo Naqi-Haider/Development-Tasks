@@ -1,0 +1,23 @@
+{% comment %}
+  Renders fragrance family and fragrance notes.
+  Accepts:
+  - product: {Object} product object (required)
+{% endcomment %}
+
+{%- liquid
+  assign fragrance_family = product.metafields.custom.fragrance_family.value
+  assign fragrance_notes = product.metafields.custom.fragrace_notes.value
+-%}
+
+<!-- DEBUG notes: [{{ product.metafields.custom.fragrance_notes.value }}] -->
+
+{%- if fragrance_family != blank or fragrance_notes != blank -%}
+  <div class="product__candle-fragrance">
+    {%- if fragrance_family != blank -%}
+      <p class="product__candle-fragrance-family">Fragrance Family: {{ fragrance_family }}</p>
+    {%- endif -%}
+    {%- if fragrance_notes != blank -%}
+      <p class="product__candle-fragrance-notes">Notes of {{ fragrance_notes }}.</p>
+    {%- endif -%}
+  </div>
+{%- endif -%}

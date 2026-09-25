@@ -1,0 +1,20 @@
+{% comment %}
+  Renders a static star rating from custom metafields (no review app required).
+  Accepts:
+  - product: {Object} product object (required)
+{% endcomment %}
+
+{%- liquid
+  assign rating = product.metafields.custom.rating.value
+  assign review_count = product.metafields.custom.review_count.value
+-%}
+
+{%- if rating != blank -%}
+  <div class="product__star-rating" role="img" aria-label="Rated {{ rating }} out of 5 stars">
+    <span class="product__star-rating-stars" style="--rating: {{ rating }};" aria-hidden="true"></span>
+    {%- if review_count != blank -%}
+      <span class="product__star-rating-count caption">{{ review_count }} Reviews</span>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+

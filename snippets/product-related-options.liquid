@@ -1,0 +1,71 @@
+{% comment %}
+  Renders the "Product Options" swatch slider from the related_options metafield.
+  Accepts:
+  - product: {Object} the current product (required)
+{% endcomment %}
+
+{%- liquid
+  assign related_products = product.metafields.custom.related_options.value
+-%}
+
+{%- if related_products != blank -%}
+  <div class="product__related-options quick-add-hidden">
+    <h2 class="product__related-options-title caption-with-letter-spacing">Product Options</h2>
+
+    <slider-component class="slider-mobile-gutter">
+      <ul
+        class="product__related-options-list slider slider--tablet"
+        id="RelatedOptions-{{ section.id }}"
+        role="list"
+      >
+        {%- for related in related_products -%}
+          {%- liquid
+            assign is_current = false
+            if related.handle == product.handle
+              assign is_current = true
+            endif
+            assign related_subtitle = related.metafields.custom.subtitle.value
+          -%}
+          <li
+            id="RelatedOption-{{ section.id }}-{{ forloop.index0 }}"
+            class="product__related-options-item slider__slide{% if is_current %} product__related-options-item--current{% endif %}"
+          >
+            <a href="{{ related.url }}" class="product__related-options-link" {% if is_current %}aria-current="true"{% endif %}>
+              <div class="product__related-options-image-wrapper">
+                {%- if related.featured_media -%}
+                  {{
+                    related.featured_media
+                    | image_url: width: 300
+                    | image_tag: loading: 'lazy', sizes: '150px', widths: '150,300'
+                  }}
+                {%- endif -%}
+              </div>
+              {% comment %} <p class="product__related-options-name">{{ related.title }}</p> {% endcomment %}
+              {%- if related_subtitle != blank -%}
+                <p class="product__related-options-subtitle caption">{{ related_subtitle }}</p>
+              {%- endif -%}
+              <p class="product__related-options-price">{{ related.price | money }}</p>
+            </a>
+          </li>
+        {%- endfor -%}
+      </ul>
+
+      {%- if related_products.size > 4 -%}
+        <div class="slider-buttons">
+          <button type="button" class="slider-button slider-button--prev" name="previous" aria-label="{{ 'general.slider.previous_slide' | t }}">
+            {{- 'icon-caret.svg' | inline_asset_content -}}
+          </button>
+          <div class="slider-counter caption">
+            <span class="slider-counter--current">1</span>
+            <span aria-hidden="true"> / </span>
+            <span class="visually-hidden">{{ 'general.slider.of' | t }}</span>
+            <span class="slider-counter--total">{{ related_products.size }}</span>
+          </div>
+          <button type="button" class="slider-button slider-button--next" name="next" aria-label="{{ 'general.slider.next_slide' | t }}">
+            {{- 'icon-caret.svg' | inline_asset_content -}}
+          </button>
+        </div>
+      {%- endif -%}
+    </slider-component>
+  </div>
+{%- endif -%}

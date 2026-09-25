@@ -1,0 +1,21 @@
+{% comment %}
+  Renders subtitle (e.g. "Boxed Candle") and burn time.
+  Accepts:
+  - product: {Object} product object (required)
+{% endcomment %}
+
+{%- liquid
+  assign subtitle = product.metafields.custom.subtitle.value
+  assign burn_time = product.metafields.custom.burn_time.value
+-%}
+
+{%- if subtitle != blank or burn_time != blank -%}
+  <div class="product__candle-subtitle-block">
+    {%- if subtitle != blank -%}
+      <p class="product__candle-subtitle subtitle">{{ subtitle }}</p>
+    {%- endif -%}
+    {%- if burn_time != blank -%}
+      <p class="product__candle-burn-time caption"><i>Burn time: {{ burn_time }}</i></p>
+    {%- endif -%}
+  </div>
+{%- endif -%}
