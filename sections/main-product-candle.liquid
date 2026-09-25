@@ -14,6 +14,10 @@
   {{ 'component-price.css' | asset_url | stylesheet_tag }}
   {{ 'component-slider.css' | asset_url | stylesheet_tag }}
   {{ 'component-rating.css' | asset_url | stylesheet_tag }}
+
+  {% comment %} Custom CSS content: {% endcomment %}
+  {{ 'product-candle-extras.css' | asset_url | stylesheet_tag }}
+
   {{ 'component-deferred-media.css' | asset_url | stylesheet_tag }}
 
   {% unless product.has_only_default_variant %}
@@ -37,6 +41,20 @@
         padding-bottom: {{ section.settings.padding_bottom }}px;
       }
     }
+
+    {% comment %} CSS variables for the font: {% endcomment %}
+    {{ section.settings.candle_heading_font | font_face: font_display: 'swap' }}
+    {{ section.settings.candle_price_font | font_face: font_display: 'swap' }}
+    {{ section.settings.candle_heading_font_light | font_face: font_display: 'swap' }}
+    {{ section.settings.candle_review_font | font_face: font_display: 'swap' }}
+
+
+    #shopify-section-{{ section.id }} {
+      --candle-heading-font: {{ section.settings.candle_heading_font.family }}, {{ section.settings.candle_heading_font.fallback_families }};
+      --candle-heading-font_light: {{ section.settings.candle_heading_font_light.family }}, {{ section.settings.candle_heading_font.fallback.families }};
+      --candle-price-font: {{ section.settings.candle_price_font.family }}, {{ section.settings.candle_price_font.fallback_families }};
+      --candle-review-font: {{ section.settings.candle_review_font.family }}, {{ section.settings.candle_review_font.fallback_families }};
+    }
   {%- endstyle -%}
 
   <script src="{{ 'product-info.js' | asset_url }}" defer="defer"></script>
@@ -44,6 +62,12 @@
   {%- if product.quantity_price_breaks_configured? -%}
     <script src="{{ 'show-more.js' | asset_url }}" defer="defer"></script>
     <script src="{{ 'price-per-item.js' | asset_url }}" defer="defer"></script>
+
+    {% comment %}
+      The shipping bar script: Although the script file already has its own tag which
+      will be executed once shipping_bar block renders.
+    {% endcomment %}
+    {% comment %} <script src="{{ 'product-shipping-bar.js' | asset_url }}" defer="defer"></script> {% endcomment %}
   {%- endif -%}
 
   {% if section.settings.image_zoom == 'hover' %}
@@ -71,6 +95,13 @@
       onload="this.media='all'"
     >
   {%- endif -%}
+
+  {% comment %}
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600&family=Libre+Baskerville:ital,wght@0,400;1,400&display=swap"
+      rel="stylesheet"
+    >
+  {% endcomment %}
 
   {% assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src' %}
   <product-component view-event-payload="{{ product | standard_event_data: 'view', context: 'page' | escape }}">
@@ -205,9 +236,33 @@
                     role="status"
                     {{ block.shopify_attributes }}
                   >
-                    <span class="visually-hidden">{{ 'products.product.sku' | t }}:</span>
+                    <span class="product__sku-label">{{ 'products.product.sku' | t }} </span>
                     {{- product.selected_or_first_available_variant.sku -}}
                   </p>
+
+                  {% comment %} The custom non-native blocks in the product template: {% endcomment %}
+                {%- when 'candle_subtitle' -%}
+                  <div {{ block.shopify_attributes }}>
+                    {% render 'product-subtitle-burn', product: product %}
+                  </div>
+                {%- when 'candle_fragrance' -%}
+                  <div {{ block.shopify_attributes }}>
+                    {% render 'product-fragrance-info', product: product %}
+                  </div>
+                {%- when 'shipping_bar' -%}
+                  <div {{ block.shopify_attributes }}>
+                    {% render 'product-shipping-bar', threshold: block.settings.threshold %}
+                  </div>
+                {%- when 'related_options' -%}
+                  <div {{ block.shopify_attributes }}>
+                    {% render 'product-related-options', product: product %}
+                  </div>
+
+                {%- when 'processing_note' -%}
+                  <div {{ block.shopify_attributes }}>
+                    {% render 'product-candle-processing' %}
+                  </div>
+                  {% comment %} ------------------------------------------------------ {% endcomment %}
                 {%- when 'custom_liquid' -%}
                   {{ block.settings.custom_liquid }}
                 {%- when 'collapsible_tab' -%}
@@ -229,6 +284,10 @@
                     </details>
                   </div>
                 {%- when 'quantity_selector' -%}
+                  {%- assign next_block = section.blocks[forloop.index] -%}
+                  {% if next_block.type == 'variant_picker' %}
+                    <div class="product-form__buy-row">
+                  {% endif %}
                   <div
                     id="Quantity-Form-{{ section.id }}"
                     class="product-form__input product-form__quantity{% if settings.inputs_shadow_vertical_offset != 0 and settings.inputs_shadow_vertical_offset < 0 %} product-form__quantity-top{% endif %}"
@@ -486,12 +545,14 @@
                     surface: 'product_page'
                   -%}
                 {%- when 'variant_picker' -%}
+                  {%- assign prev_block_index = forloop.index0 | minus: 1 -%}
+                  {%- assign prev_block = section.blocks[prev_block_index] -%}
                   {% render 'product-variant-picker',
                     product: product,
                     block: block,
                     product_form_id: product_form_id
                   %}
-                {% if product.id == settings.gift_1_product.id or product.id == settings.gift_2_product.id %}
+                  {% if product.id == settings.gift_1_product.id or product.id == settings.gift_2_product.id %}
                     <p class="product__gift-note">
                       This is a free gift. It will be added automatically when your cart reaches the qualifying amount.
                     </p>
@@ -504,44 +565,13 @@
                       show_pickup_availability: true
                     -%}
                   {% endif %}
-                {%- when 'rating' -%}
-                  {%- if product.metafields.reviews.rating.value != blank -%}
-                    <div class="rating-wrapper">
-                      {% liquid
-                        assign rating_decimal = 0
-                        assign decimal = product.metafields.reviews.rating.value.rating | modulo: 1
-                        if decimal >= 0.3 and decimal <= 0.7
-                          assign rating_decimal = 0.5
-                        elsif decimal > 0.7
-                          assign rating_decimal = 1
-                        endif
-                      %}
-                      <div
-                        class="rating"
-                        role="img"
-                        aria-label="{{ 'accessibility.star_reviews_info' | t: rating_value: product.metafields.reviews.rating.value, rating_max: product.metafields.reviews.rating.value.scale_max }}"
-                      >
-                        <span
-                          aria-hidden="true"
-                          class="rating-star"
-                          style="--rating: {{ product.metafields.reviews.rating.value.rating | floor }}; --rating-max: {{ product.metafields.reviews.rating.value.scale_max }}; --rating-decimal: {{ rating_decimal }};"
-                        ></span>
-                      </div>
-                      <p class="rating-text caption">
-                        <span aria-hidden="true">
-                          {{- product.metafields.reviews.rating.value }} /
-                          {{ product.metafields.reviews.rating.value.scale_max -}}
-                        </span>
-                      </p>
-                      <p class="rating-count caption">
-                        <span aria-hidden="true">({{ product.metafields.reviews.rating_count }})</span>
-                        <span class="visually-hidden">
-                          {{- product.metafields.reviews.rating_count }}
-                          {{ 'accessibility.total_reviews' | t -}}
-                        </span>
-                      </p>
+                  {%- if forloop.index0 > 0 and prev_block.type == 'quantity_selector' -%}
                     </div>
-                  {%- endif -%}
+                  {% endif %}
+                {%- when 'rating' -%}
+                  <div {{ block.shopify_attributes }}>
+                    {% render 'product-star-rating', product: product %}
+                  </div>
                 {%- when 'complementary' -%}
                   <product-recommendations
                     class="complementary-products quick-add-hidden{% if block.settings.make_collapsible_row %} is-accordion{% endif %}{% if block.settings.enable_quick_add %} complementary-products-contains-quick-add{% endif %}"
@@ -947,6 +977,43 @@
           "info": "t:sections.main-product.blocks.buy_buttons.settings.show_gift_card_recipient.info"
         }
       ]
+    },
+    {
+      "type": "processing_note",
+      "name": "Processing Time Note",
+      "limit": 1
+    },
+    {
+      "type": "candle_subtitle",
+      "name": "Subtitle & Burn Time",
+      "limit": 1
+    },
+    {
+      "type": "candle_fragrance",
+      "name": "Fragrance Family & Notes",
+      "limit": 1
+    },
+    {
+      "type": "shipping_bar",
+      "name": "Free Shipping Bar",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "range",
+          "id": "threshold",
+          "min": 0,
+          "max": 300,
+          "step": 5,
+          "unit": "$",
+          "label": "Free shipping threshold",
+          "default": 75
+        }
+      ]
+    },
+    {
+      "type": "related_options",
+      "name": "Product Options",
+      "limit": 1
     },
     {
       "type": "description",
@@ -2163,6 +2230,34 @@
       "id": "color_scheme",
       "label": "t:sections.all.colors.label",
       "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Candle Typography"
+    },
+    {
+      "type": "font_picker",
+      "id": "candle_heading_font",
+      "label": "Work Sans (headings/body)",
+      "default": "assistant_n4"
+    },
+    {
+      "type": "font_picker",
+      "id": "candle_heading_font_light",
+      "label": "Work Sans Light (title)",
+      "default": "assistant_n4"
+    },
+    {
+      "type": "font_picker",
+      "id": "candle_review_font",
+      "label": "Roboto Light (review count)",
+      "default": "assistant_n4"
+    },
+    {
+      "type": "font_picker",
+      "id": "candle_price_font",
+      "label": "Libre Baskerville (price)",
+      "default": "assistant_n4"
     },
     {
       "type": "header",

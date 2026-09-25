@@ -12,19 +12,40 @@
     "main": {
       "type": "main-product-candle",
       "blocks": {
-        "vendor": {
-          "type": "text",
-          "settings": {
-            "text": "{{ product.vendor }}",
-            "text_style": "uppercase"
-          }
-        },
         "title": {
           "type": "title",
           "settings": {}
         },
+        "candle_subtitle_AGcMgp": {
+          "type": "candle_subtitle",
+          "settings": {}
+        },
+        "sku_ntnRDM": {
+          "type": "sku",
+          "settings": {
+            "text_style": "uppercase"
+          }
+        },
+        "rating_TDQjMH": {
+          "type": "rating",
+          "settings": {}
+        },
+        "candle_fragrance_H3DPnh": {
+          "type": "candle_fragrance",
+          "settings": {}
+        },
         "price": {
           "type": "price",
+          "settings": {}
+        },
+        "shipping_bar_rU86aC": {
+          "type": "shipping_bar",
+          "settings": {
+            "threshold": 75
+          }
+        },
+        "quantity_selector": {
+          "type": "quantity_selector",
           "settings": {}
         },
         "variant_picker": {
@@ -34,9 +55,79 @@
             "swatch_shape": "circle"
           }
         },
-        "quantity_selector": {
-          "type": "quantity_selector",
+        "processing_note_XkQ3V4": {
+          "type": "processing_note",
           "settings": {}
+        },
+        "related_options_Vaj4r7": {
+          "type": "related_options",
+          "settings": {}
+        },
+        "collapsible_tab_tnggUw": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Fragrance Description",
+            "icon": "none",
+            "content": "<p>Fragrance fills the room like a guitar resting in your arms, a limb that hangs as if it were always there. A heart that beats like a drum, strings pluck in rhythmic patterns, intertwined with trails of smoke, inhibition, and leather worn like your own identity.</p>",
+            "page": ""
+          }
+        },
+        "collapsible_tab_RLzKp3": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Product Description",
+            "icon": "none",
+            "content": "<p>Crafted for the ones who live life in full volume, this candle is a tribute to the artistry of sound and design. A guitar pick, front and center, sets the tone on sleek glass embossed with six strings, a nod to the rhythm and craftsmanship behind every great song. Housed in a box inspired by the rich textures and stitched details of a classic guitar case, every element was designed with intention. From the tactile embossing to the structured packaging, it captures the spirit of iconic instruments and backstage moments. Light it up and let the room hum with warmth, a hint of nostalgia, a little edge, and a whole lot of soul.</p>",
+            "page": ""
+          }
+        },
+        "collapsible_tab_FwHw3t": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Product Details",
+            "icon": "none",
+            "content": "<ul><li>Burn Time: ~ 55 Hours</li><li>Fill (oz): 11</li><li>Fill (g/ml): 311</li><li>Natural Wick(s): 1</li><li>Vegan</li><li>Imperial Dimensions: 3.9 D x 3.9 H</li><li>Metric Dimensions: 99mm x 100mm</li></ul><p>806644090113</p>",
+            "page": ""
+          }
+        },
+        "collapsible_tab_whdyYE": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "How to Use",
+            "icon": "none",
+            "content": "<p>Trim wicks to 1/4” with each burn. Place candle on a heat resistant surface or candle tray. Allow wax to melt to the candle’s edge every burn to prevent tunneling. Keep candles away from drafts to ensure a smokeless, clean burn. Use a wick snuffer to extinguish a candle without soot or smoke. Discontinue burning a candle when less than 1/4” of wax remains.</p>",
+            "page": ""
+          }
+        },
+        "icon_with_text_nRHMDJ": {
+          "type": "icon-with-text",
+          "settings": {
+            "layout": "horizontal",
+            "icon_1": "none",
+            "image_1": "shopify://shop_images/box.png",
+            "heading_1": "Complimentary shipping on orders $75+",
+            "icon_2": "none",
+            "image_2": "shopify://shop_images/gift.png",
+            "heading_2": "Luxury samples included in orders $75+",
+            "icon_3": "none",
+            "image_3": "shopify://shop_images/spark.png",
+            "heading_3": "Clean burning coconut wax blend"
+          }
+        },
+        "icon_with_text_BhKDRC": {
+          "type": "icon-with-text",
+          "settings": {
+            "layout": "horizontal",
+            "icon_1": "none",
+            "image_1": "shopify://shop_images/fire.png",
+            "heading_1": "Natural wicks",
+            "icon_2": "none",
+            "image_2": "shopify://shop_images/flask.png",
+            "heading_2": "Free of sulfates, phlalates, & parabens",
+            "icon_3": "none",
+            "image_3": "shopify://shop_images/wrap.png",
+            "heading_3": "Handcrafted in California"
+          }
         },
         "buy_buttons": {
           "type": "buy_buttons",
@@ -44,35 +135,39 @@
             "show_dynamic_checkout": true,
             "show_gift_card_recipient": true
           }
-        },
-        "description": {
-          "type": "description",
-          "settings": {}
-        },
-        "share": {
-          "type": "share",
-          "settings": {
-            "share_label": "Share"
-          }
         }
       },
       "block_order": [
-        "vendor",
         "title",
+        "candle_subtitle_AGcMgp",
+        "sku_ntnRDM",
+        "rating_TDQjMH",
+        "candle_fragrance_H3DPnh",
         "price",
-        "variant_picker",
+        "shipping_bar_rU86aC",
         "quantity_selector",
-        "buy_buttons",
-        "description",
-        "share"
+        "variant_picker",
+        "processing_note_XkQ3V4",
+        "related_options_Vaj4r7",
+        "collapsible_tab_tnggUw",
+        "collapsible_tab_RLzKp3",
+        "collapsible_tab_FwHw3t",
+        "collapsible_tab_whdyYE",
+        "icon_with_text_nRHMDJ",
+        "icon_with_text_BhKDRC",
+        "buy_buttons"
       ],
       "settings": {
         "enable_sticky_info": true,
         "color_scheme": "scheme-1",
+        "candle_heading_font": "work_sans_n4",
+        "candle_heading_font_light": "work_sans_n3",
+        "candle_review_font": "roboto_n3",
+        "candle_price_font": "libre_baskerville_n7",
         "media_size": "large",
         "constrain_to_viewport": true,
         "media_fit": "contain",
-        "gallery_layout": "stacked",
+        "gallery_layout": "thumbnail",
         "mobile_thumbnails": "hide",
         "media_position": "left",
         "image_zoom": "lightbox",
@@ -85,6 +180,10 @@
     "disclosures": {
       "type": "disclosures",
       "settings": {
+        "heading": "Disclosures",
+        "heading_size": "h2",
+        "open_by_default": false,
+        "color_scheme": "",
         "padding_top": 36,
         "padding_bottom": 0
       }
