@@ -74,47 +74,6 @@
           assign bar_progress = 100.0
         endif
       -%}
-      {% comment %} Tier Progress bar {% endcomment %}
-      {% unless cart == empty %}
-        <div class="cart-drawer__tier-progress">
-          <p class="cart-drawer__tier-message">{{ bar_message }}</p>
-          <div
-            class="cart-drawer__tier-track"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow="{{ bar_progress | at_most: 100 | round }}"
-          >
-            {%- assign bar_width = bar_progress | at_most: 100 | round -%}
-            <div class="cart-drawer__tier-fill" style="width: {{ bar_width }}%;"></div>
-            {% comment %} <div class="cart-drawer__tier-fill" style="width: {{ bar_progress | at_most: 100 }}%;"></div> {% endcomment %}
-            <span
-              class="cart-drawer__tier-point tier-1{% if eligible_spend >= t1_cents %} is-active{% endif %}"
-              style="left: 50%;"
-            ></span>
-            <span
-              class="cart-drawer__tier-point tier-2{% if eligible_spend >= t2_cents %} is-active{% endif %}"
-              style="left: 100%;"
-            ></span>
-          </div>
-          <div class="cart-drawer__tier-labels">
-            <span
-              {% if eligible_spend >= t1_cents %}
-                class="is-active"
-              {% endif %}
-            >
-              {{ settings.gift_1_product.title }} · {{ t1_cents | money_without_trailing_zeros }}
-            </span>
-            <span
-              {% if eligible_spend >= t2_cents %}
-                class="is-active"
-              {% endif %}
-            >
-              {{ settings.gift_2_product.title }} · {{ t2_cents | money_without_trailing_zeros }}
-            </span>
-          </div>
-        </div>
-      {% endunless %}
       {%- if cart == empty -%}
         <div class="drawer__inner-empty">
           <div class="cart-drawer__warnings center{% if settings.cart_drawer_collection != blank %} cart-drawer__warnings--has-collection{% endif %}">
@@ -296,20 +255,22 @@
                           {% endif %}
 
                           {%- if item.original_price != item.final_price -%}
-                            {% comment %} <div class="cart-item__discounted-prices">
-                              <span class="visually-hidden">
-                                {{ 'products.product.price.regular_price' | t }}
-                              </span>
-                              <s class="cart-item__old-price product-option">
-                                {{- item.original_price | money -}}
-                              </s>
-                              <span class="visually-hidden">
-                                {{ 'products.product.price.sale_price' | t }}
-                              </span>
-                              <strong class="cart-item__final-price product-option">
-                                {{ item.final_price | money }}
-                              </strong>
-                            </div> {% endcomment %}
+                            {% comment %}
+                              <div class="cart-item__discounted-prices">
+                                <span class="visually-hidden">
+                                  {{ 'products.product.price.regular_price' | t }}
+                                </span>
+                                <s class="cart-item__old-price product-option">
+                                  {{- item.original_price | money -}}
+                                </s>
+                                <span class="visually-hidden">
+                                  {{ 'products.product.price.sale_price' | t }}
+                                </span>
+                                <strong class="cart-item__final-price product-option">
+                                  {{ item.final_price | money }}
+                                </strong>
+                              </div>
+                            {% endcomment %}
                           {%- else -%}
                             <div class="product-option">
                               {{ item.original_price | money }}
@@ -429,7 +390,7 @@
                           <quantity-popover>
                             <div class="cart-item__quantity-wrapper quantity-popover-wrapper">
                               {% if is_gift %}
-                                <span class="cart-item--gift-qty">Qty: {{ item.quantity }}</span>
+                                <span class="cart-item--gift-qty">Quantity: {{ item.quantity }}</span>
                               {% endif %}
                               <div class="quantity-popover-container{% if has_qty_rules or has_vol_pricing %} quantity-popover-container--hover{% endif %}">
                                 <quantity-input class="quantity cart-quantity">
@@ -666,6 +627,8 @@
             {%- endif -%}
           </div>
 
+          {% render 'cards-gift-saving-line' %}
+
           <div class="totals" role="status">
             <h2 class="totals__total">{{ 'sections.cart.estimated_total' | t }}</h2>
             <p class="totals__total-value">{{ cart.total_price | money_with_currency }}</p>
@@ -713,6 +676,48 @@
         </div>
 
         <!-- CTAs -->
+
+        {% comment %} Tier Progress bar {% endcomment %}
+        {% unless cart == empty %}
+          <div class="cart-drawer__tier-progress">
+            <p class="cart-drawer__tier-message">{{ bar_message }}</p>
+            <div
+              class="cart-drawer__tier-track"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="{{ bar_progress | at_most: 100 | round }}"
+            >
+              {%- assign bar_width = bar_progress | at_most: 100 | round -%}
+              <div class="cart-drawer__tier-fill" style="width: {{ bar_width }}%;"></div>
+              {% comment %} <div class="cart-drawer__tier-fill" style="width: {{ bar_progress | at_most: 100 }}%;"></div> {% endcomment %}
+              <span
+                class="cart-drawer__tier-point tier-1{% if eligible_spend >= t1_cents %} is-active{% endif %}"
+                style="left: 50%;"
+              ></span>
+              <span
+                class="cart-drawer__tier-point tier-2{% if eligible_spend >= t2_cents %} is-active{% endif %}"
+                style="left: 100%;"
+              ></span>
+            </div>
+            <div class="cart-drawer__tier-labels">
+              <span
+                {% if eligible_spend >= t1_cents %}
+                  class="is-active"
+                {% endif %}
+              >
+                {{ settings.gift_1_product.title }} · {{ t1_cents | money_without_trailing_zeros }}
+              </span>
+              <span
+                {% if eligible_spend >= t2_cents %}
+                  class="is-active"
+                {% endif %}
+              >
+                {{ settings.gift_2_product.title }} · {{ t2_cents | money_without_trailing_zeros }}
+              </span>
+            </div>
+          </div>
+        {% endunless %}
 
         <div class="cart__ctas" {{ block.shopify_attributes }}>
           <button

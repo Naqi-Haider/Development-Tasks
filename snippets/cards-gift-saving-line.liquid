@@ -1,0 +1,23 @@
+{%- comment -%}
+  Shows how much the customer saved on free-gift lines.
+  Gift products come from theme settings. Renders nothing if no gift is discounted.
+  Usage: {% render 'cart-gift-savings' %}
+{%- endcomment -%}
+
+{%- assign gift_1_id = settings.gift_1_product.selected_or_first_available_variant.id -%}
+{%- assign gift_2_id = settings.gift_2_product.selected_or_first_available_variant.id -%}
+{%- assign gift_savings = 0 -%}
+
+{%- for item in cart.items -%}
+  {%- if item.variant_id == gift_1_id or item.variant_id == gift_2_id -%}
+    {%- assign line_saving = item.original_line_price | minus: item.final_line_price -%}
+    {%- assign gift_savings = gift_savings | plus: line_saving -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- if gift_savings > 0 -%}
+  <div class="cart-drawer__savings">
+    <span>You saved with free gifts</span>
+    <span>-{{ gift_savings | money }}</span>
+  </div>
+{%- endif -%}

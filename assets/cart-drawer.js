@@ -24,6 +24,83 @@ class CartDrawer extends HTMLElement {
     }
   }
 
+  beginUpdate() {
+    this.pendingUpdates = (this.pendingUpdates || 0) + 1;
+    this.classList.add('is-updating');
+    this.setAttribute('aria-busy', 'true');
+    this.querySelector('#CartDrawer-Checkout')?.setAttribute('disabled', '');
+  }
+
+  endUpdate() {
+    this.pendingUpdates = Math.max(0, (this.pendingUpdates || 0) - 1);
+    if (this.pendingUpdates > 0) return;
+    this.classList.remove('is-updating');
+    this.removeAttribute('aria-busy');
+    this.querySelector('#CartDrawer-Checkout')?.toggleAttribute('disabled', this.classList.contains('is-empty'));
+  }
+
+  // What should the gift lines be for this cart?
+  getGiftPlan(cart) {
+    const t1 = parseInt(this.getAttribute('data-threshold-1'), 10);
+    const v1 = parseInt(this.getAttribute('data-variant-1'), 10);
+    const t2 = parseInt(this.getAttribute('data-threshold-2'), 10);
+    const v2 = parseInt(this.getAttribute('data-variant-2'), 10);
+
+    const eligible = cart.items.reduce(
+      (sum, i) => (i.variant_id === v1 || i.variant_id === v2 ? sum : sum + i.original_line_price),
+      0,
+    );
+    const qtyOf = (id) => cart.items.filter((i) => i.variant_id === id).reduce((s, i) => s + i.quantity, 0);
+
+    const add = [];
+    const update = {};
+    [{ id: v1, threshold: t1 }, { id: v2, threshold: t2 }]
+      .filter((g) => g.id)
+      .forEach(({ id, threshold }) => {
+        const current = qtyOf(id);
+        const target = threshold && eligible >= threshold ? 1 : 0;
+        if (current === 0 && target === 1) add.push({ id, quantity: 1 });
+        else if (current > 0 && current !== target) update[id] = target;
+      });
+
+    return { add, update, changed: add.length > 0 || Object.keys(update).length > 0 };
+  }
+
+  // Applies gift changes and returns state + sections, so the caller renders ONCE
+  async reconcileGifts(cart) {
+    const plan = this.getGiftPlan(cart);
+    const sections = this.getSectionsToRender().map((s) => s.id);
+    const post = (url, body) =>
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(body),
+      }).then((res) => res.json());
+
+    const hasUpdate = Object.keys(plan.update).length > 0;
+    const hasAdd = plan.add.length > 0;
+    let state = cart;
+
+    // Only the LAST request asks for sections
+    if (hasUpdate) {
+      state = await post(`${routes.cart_update_url}.js`, {
+        updates: plan.update,
+        ...(hasAdd ? {} : { sections }),
+      });
+    }
+    if (hasAdd) {
+      state = await post(`${routes.cart_add_url}.js`, { items: plan.add, sections });
+    }
+    // No gift change (or a failed request): fetch the sections separately
+    if (!state.sections) {
+      const fetched = await fetch(`${routes.cart_url}?sections=${sections.join(',')}&_=${Date.now()}`, {
+        cache: 'no-store',
+      }).then((res) => res.json());
+      state = { ...state, sections: fetched };
+    }
+    return { ...state, item_count: state.item_count ?? cart.item_count };
+  }
+
   setHeaderCartIconAccessibility() {
     const cartLink = document.querySelector('#cart-icon-bubble');
     if (!cartLink) return;
@@ -97,7 +174,7 @@ class CartDrawer extends HTMLElement {
     cartDrawerNote.parentElement.addEventListener('keyup', onKeyUpEscape);
   }
 
-  renderContents(parsedState) {
+  renderContents(parsedState, { skipGiftSync = false } = {}) {
     //Resolving the .is-empty cart drawer case:
     this.productId = parsedState.id;
     this.getSectionsToRender().forEach((section) => {
@@ -126,6 +203,10 @@ class CartDrawer extends HTMLElement {
     });
 
     if (!this.isSyncing) {
+      this.syncGifts();
+    }
+
+    if (!skipGiftSync && !this.isSyncing) {
       this.syncGifts();
     }
   }
@@ -157,107 +238,30 @@ class CartDrawer extends HTMLElement {
   }
 
   //Sync Gifts code inside this web component class:
-  syncGifts() {
+  async syncGifts() {
     if (this.isSyncing) return;
+    if (!this.getAttribute('data-variant-1') && !this.getAttribute('data-variant-2')) return;
+
     this.isSyncing = true;
+    this.beginUpdate();
+    try {
+      const cart = await fetch(`${routes.cart_url}.js?_=${Date.now()}`, { cache: 'no-store' }).then((r) => r.json());
 
-    const t1 = parseInt(this.getAttribute('data-threshold-1'), 10);
-    const v1 = parseInt(this.getAttribute('data-variant-1'), 10);
-    const t2 = parseInt(this.getAttribute('data-threshold-2'), 10);
-    const v2 = parseInt(this.getAttribute('data-variant-2'), 10);
+      if (cart.item_count === 0) {
+        this.classList.add('is-empty');
+        this.querySelector('.drawer__inner')?.classList.add('is-empty');
+        return;
+      }
+      if (!this.getGiftPlan(cart).changed) return;
 
-    if (!v1 && !v2) {
+      const state = await this.reconcileGifts(cart);
+      this.renderContents(state, { skipGiftSync: true });
+    } catch (err) {
+      console.error('Gift sync error:', err);
+    } finally {
       this.isSyncing = false;
-      return;
+      this.endUpdate();
     }
-
-    fetch(`${routes.cart_url}.js?_=${Date.now()}`, { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((cart) => {
-        //If the cart is completely empty:
-        if (cart.item_count === 0) {
-          this.classList.add('is-empty');
-          this.querySelector('.drawer__inner')?.classList.add('is-empty');
-
-          this.isSyncing = false;
-          return;
-        }
-
-
-        // Calculate eligible subtotal EXCLUDING the free gifts
-        const eligibleTotal = cart.items.reduce((sum, item) => {
-          if (item.variant_id === v1 || item.variant_id === v2) return sum;
-          return sum + item.original_line_price;
-        }, 0);
-
-        const currentQty1 = cart.items
-          .filter((i) => i.variant_id === v1)
-          .reduce((sum, i) => sum + i.quantity, 0);
-
-        const currentQty2 = cart.items
-          .filter((i) => i.variant_id === v2)
-          .reduce((sum, i) => sum + i.quantity, 0);
-
-        const targetQty1 = Boolean(v1 && t1 && eligibleTotal >= t1) ? 1 : 0;
-        const targetQty2 = Boolean(v2 && t2 && eligibleTotal >= t2) ? 1 : 0;
-
-        // If cart already matches target quantities, exit immediately
-        if (currentQty1 === targetQty1 && currentQty2 === targetQty2) {
-          this.isSyncing = false;
-          return;
-        }
-
-        const sections = this.getSectionsToRender().map((s) => s.id);
-
-        // 1. Items needing initial injection (requires /cart/add.js)
-        const itemsToAdd = [];
-        if (v1 && currentQty1 === 0 && targetQty1 === 1) itemsToAdd.push({ id: v1, quantity: 1 });
-        if (v2 && currentQty2 === 0 && targetQty2 === 1) itemsToAdd.push({ id: v2, quantity: 1 });
-
-        // 2. Items needing quantity reduction or removal (requires /cart/update.js)
-        const updates = {};
-        if (v1 && currentQty1 > 0 && currentQty1 !== targetQty1) updates[v1] = targetQty1;
-        if (v2 && currentQty2 > 0 && currentQty2 !== targetQty2) updates[v2] = targetQty2;
-
-        let syncPromise = Promise.resolve();
-
-        // Execute updates/removals first if needed
-        if (Object.keys(updates).length > 0) {
-          syncPromise = syncPromise.then(() =>
-            fetch(`${routes.cart_update_url}.js`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-              body: JSON.stringify({ updates, sections: itemsToAdd.length > 0 ? [] : sections })
-            }).then((res) => res.json())
-          );
-        }
-
-        // Execute additions second if needed
-        if (itemsToAdd.length > 0) {
-          syncPromise = syncPromise.then(() =>
-            fetch(`${routes.cart_add_url}.js`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-              body: JSON.stringify({ items: itemsToAdd, sections })
-            }).then((res) => res.json())
-          );
-        }
-
-        return syncPromise
-          .then((response) => {
-            if (response && response.sections) {
-              this.renderContents(response);
-            }
-          })
-          .catch((err) => console.error('Gift sync error:', err))
-          .finally(() => {
-            this.isSyncing = false;
-          });
-      })
-      .catch((err) => {
-        console.error('Cart Read error: ', err);
-        this.isSyncing = false;
-      });
   }
 }
 
@@ -287,28 +291,20 @@ class CartDrawerItems extends CartItems {
       lineItem?.querySelector('[data-variant-id]')?.getAttribute('data-variant-id');
 
     if (targetVariantId) {
+      const drawer = document.querySelector('cart-drawer');
       this.enableLoading(line);
+      drawer.beginUpdate();
+      drawer.isSyncing = true; // stops open()/pub-sub from starting a second sync
 
-      // 1. Fetch current cart state to get all split line keys for this variant
       fetch(`${routes.cart_url}.js?_=${Date.now()}`, { cache: 'no-store' })
         .then((res) => res.json())
         .then((cart) => {
-          const matchingLines = cart.items.filter(
-            (item) => String(item.variant_id) === String(targetVariantId)
-          );
+          const matchingLines = cart.items.filter((item) => String(item.variant_id) === String(targetVariantId));
           const updates = {};
-
           if (matchingLines.length > 0) {
-            // Assign target quantity to the primary key
             updates[matchingLines[0].key] = quantity;
-
-            // Zero out any other split lines for this same variant
-            for (let i = 1; i < matchingLines.length; i++) {
-              updates[matchingLines[i].key] = 0;
-            }
+            for (let i = 1; i < matchingLines.length; i++) updates[matchingLines[i].key] = 0;
           }
-
-          // 2. Post updates using actual line item keys to the .js endpoint
           return fetch(`${routes.cart_update_url}.js`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -316,24 +312,12 @@ class CartDrawerItems extends CartItems {
           });
         })
         .then((res) => res.json())
-        .then((cartData) => {
-          // 3. Fetch re-rendered drawer sections
-          const sectionNames = this.getSectionsToRender().map((s) => s.section).join(',');
-          return fetch(`${routes.cart_url}?sections=${sectionNames}&_=${Date.now()}`, { cache: 'no-store' })
-            .then((res) => res.json())
-            .then((sections) => ({ ...cartData, sections }));
-        })
-        .then((parsedState) => {
-          this.classList.toggle('is-empty', parsedState.item_count === 0);
-          const cartDrawer = document.querySelector('cart-drawer');
-          if (cartDrawer) {
-            cartDrawer.classList.toggle('is-empty', parsedState.item_count === 0);
-            cartDrawer.renderContents(parsedState);
-          }
-          this.disableLoading(line);
-        })
-        .catch((e) => {
-          console.error('Quantity update failed:', e);
+        .then((cartData) => drawer.reconcileGifts(cartData))
+        .then((parsedState) => drawer.renderContents(parsedState, { skipGiftSync: true }))
+        .catch((e) => console.error('Quantity update failed:', e))
+        .finally(() => {
+          drawer.isSyncing = false;
+          drawer.endUpdate();
           this.disableLoading(line);
         });
       return;

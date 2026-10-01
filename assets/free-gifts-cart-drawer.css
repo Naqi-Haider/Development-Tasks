@@ -145,3 +145,63 @@
     visibility: visible !important;
     transform: none !important;
 }
+
+/* Saving line */
+.cart-drawer__savings {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+/* Dim everything the gift sync can change */
+cart-drawer.is-updating .cart-item--gift,
+cart-drawer.is-updating .cart-drawer__tier-progress>*,
+cart-drawer.is-updating .cart-drawer__savings,
+cart-drawer.is-updating .totals {
+    opacity: 0.4;
+    transition: opacity 0.2s ease 0.15s;
+    /* delay avoids a flicker on fast updates */
+    pointer-events: none;
+}
+
+/* One spinner over the progress area */
+cart-drawer.is-updating .cart-drawer__tier-progress {
+    position: relative;
+}
+
+cart-drawer.is-updating .cart-drawer__tier-progress::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2rem;
+    height: 2rem;
+    margin: -1rem 0 0 -1rem;
+    border: 2px solid rgba(var(--color-foreground), 0.2);
+    border-top-color: rgb(var(--color-foreground));
+    border-radius: 50%;
+    opacity: 0;
+    animation: cart-drawer-spin 0.7s linear infinite, cart-drawer-fade-in 0.2s ease 0.15s forwards;
+}
+
+@keyframes cart-drawer-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes cart-drawer-fade-in {
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    cart-drawer.is-updating .cart-drawer__tier-progress::after {
+        animation-duration: 2s, 0.2s;
+    }
+}
